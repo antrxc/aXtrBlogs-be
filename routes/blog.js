@@ -34,17 +34,25 @@ router.post('/', authMiddleware, async (req, res) => {
 // GET - All blogs (for everyone)
 router.get('/', async (req, res) => {
   try {
-    const blogs = await Blog.find().populate('author', 'name email');
+    const blogs = await Blog.find()
+      .populate('author', 'name email')
+      .sort({ createdAt: -1 });
     res.json(blogs);
   } catch (err) {
     res.status(500).json({ message: 'Error fetching blogs', error: err });
   }
 });
 
-// GET - Single blog by ID
+// GET - Single blog by ID (with virtual comments populated)
 router.get('/:id', async (req, res) => {
   try {
-    const blog = await Blog.findById(req.params.id).populate('author', 'name email');
+    const blog = await Blog.findById(req.params.id)
+      .populate('author', 'name email')
+      .populate({
+        path: 'comments',
+        populate: { path: 'author', select: 'name email' }
+      });
+
     if (!blog) return res.status(404).json({ message: 'Blog not found' });
 
     res.json(blog);

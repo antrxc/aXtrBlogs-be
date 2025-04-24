@@ -1,14 +1,39 @@
 const express = require('express');
+const Comment = require('../models/Comment');
+const authMiddleware = require('../middleware/auth');
+
 const router = express.Router();
 
-// Placeholder route for posting a comment
-router.post('/', (req, res) => {
-  res.json({ message: 'Comment creation endpoint' });
+// POST - Add comment to a blog post
+router.post('/:blogId', authMiddleware, async (req, res) => {
+  const { content } = req.body;
+  const { blogId } = req.params;
+
+  try {
+    const comment = new Comment({
+      content,
+      blog: blogId,
+      author: req.user._id,
+    });
+
+    await comment.save();
+    res.status(201).json(comment);
+  } catch (err) {
+    res.status(500).json({ message: 'Error posting comment', error: err });
+  }
 });
 
-// Placeholder route for getting all comments on a blog post
-router.get('/', (req, res) => {
-  res.json([{ author: 'John Doe', content: 'Great post!' }]);
+// GET - Get comments for a blog post
+router.get('/:blogId', async (req, res) => {
+  try {
+    const comments = await Comment.find({ blog: req.params.blogId })
+      .populate('author', 'name email')
+      .sort({ createdAt: -1 });
+
+    res.json(comments);
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching comments', error: err });
+  }
 });
 
 module.exports = router;
