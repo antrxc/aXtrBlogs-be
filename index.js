@@ -1,7 +1,10 @@
+
+
 const express = require('express');
 const mongoose = require('mongoose');
 const passport = require('passport');
 const cookieSession = require('cookie-session');
+const session = require('express-session');
 const cors = require('cors');
 require('dotenv').config(); // loads .env file
 
@@ -29,6 +32,18 @@ app.use(cookieSession({
   maxAge: 24 * 60 * 60 * 1000 // 1 day
 }));
 
+
+
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'your_default_secret',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: false, // true if using HTTPS
+      httpOnly: true,
+      maxAge: 1000 * 60 * 60 * 24, // 1 day
+    }
+  }));
 // Initialize Passport (for Google login)
 app.use(passport.initialize());
 app.use(passport.session());
@@ -37,6 +52,7 @@ app.use(passport.session());
 app.use('/auth', authRoutes);
 app.use('/blogs', blogRoutes);
 app.use('/comments', commentRoutes);
+app.use('/api/blogs', blogRoutes);
 
 // Connect to MongoDB and start server
 mongoose.connect(process.env.MONGO_URI)
